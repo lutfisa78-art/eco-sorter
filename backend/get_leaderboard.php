@@ -1,29 +1,49 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Content-Type: application/json; charset=UTF-8");
-
-// Tambahan proteksi preflight request dari lintas domain browser (CORS)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
 
 include "config.php";
 
-$sql = "SELECT nickname, score FROM leaderboard ORDER BY score DESC LIMIT 10";
+// Endpoint hanya menerima GET
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405);
+
+    echo json_encode([
+        "status" => "error",
+        "message" => "Method tidak diizinkan."
+    ]);
+
+    exit;
+}
+
+$sql = "SELECT nickname, score
+        FROM leaderboard
+        ORDER BY score DESC
+        LIMIT 10";
+
 $result = $conn->query($sql);
 
+if (!$result) {
+    http_response_code(500);
+
+    echo json_encode([
+        "status" => "error",
+        "message" => "Gagal mengambil data leaderboard."
+    ]);
+
+    $conn->close();
+    exit;
+}
+
 $leaderboard = [];
-if ($result && $result->num_rows > 0) {
-    while($row = $result->fetch_assoc()) {
-        // Memastikan tipe data skor dikembalikan sebagai angka murni (integer) ke React
-        $row['score'] = (int)$row['score'];
-        $leaderboard[] = $row;
-    }
+
+while ($row = $result->fetch_assoc()) {
+
+    $leaderboard[] = [
+        "nickname" => $row['nickname'],
+        "score" => (int) $row['score']
+    ];
 }
 
 echo json_encode($leaderboard);
+
 $conn->close();
 ?>
