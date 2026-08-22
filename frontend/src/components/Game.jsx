@@ -321,42 +321,63 @@ const Game = () => {
   }, [speed, gameState, loseLife]);
 
   // Fungsi saveScore terhubung ke Railway
-  const saveScore = async (name) => {
-    if (!name.trim()) return; 
-    
-    try {
-      const response = await fetch('https://eco-sorter-production-bbd3.up.railway.app/save_score.php', {
+ const saveScore = async (name) => {
+  if (!name.trim()) return;
+
+  try {
+    const response = await fetch(
+      'https://eco-sorter-production-bbd3.up.railway.app/save_score.php',
+      {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
         },
-        body: JSON.stringify({ 
-          nickname: name.trim(), 
-          score: parseInt(score, 10) 
+        body: JSON.stringify({
+          nickname: name.trim(),
+          score: parseInt(score, 10),
         }),
-      });
-
-      const result = await response.json();
-
-      if (result.status === "success") {
-        setNotificationMessage('Skor berhasil disimpan!');
-        setNotificationType('success');
-        setShowNotification(true);
-        setTimeout(() => {
-          navigate('/', { replace: true });
-        }, 1500);
-      } else {
-        throw new Error(result.message || "Gagal menyimpan");
       }
-    } catch (error) {
-      console.error('Gagal menyimpan skor:', error);
-      setNotificationMessage('Gagal menyimpan skor. Coba lagi.');
-      setNotificationType('error');
-      setShowNotification(true);
-      setTimeout(() => setShowNotification(false), 3000);
+    );
+
+    // Ambil response asli dari server
+    const text = await response.text();
+
+    console.log('HTTP Status:', response.status);
+    console.log('Response Railway:', text);
+
+    let result;
+
+    try {
+      result = JSON.parse(text);
+    } catch (e) {
+      throw new Error('Server mengirim response bukan JSON: ' + text);
     }
-  };
+
+    if (!response.ok || result.status !== 'success') {
+      throw new Error(result.message || 'Gagal menyimpan skor');
+    }
+
+    setNotificationMessage(result.message || 'Skor berhasil disimpan!');
+    setNotificationType('success');
+    setShowNotification(true);
+
+    setTimeout(() => {
+      navigate('/', { replace: true });
+    }, 1500);
+
+  } catch (error) {
+    console.error('Gagal menyimpan skor:', error);
+
+    setNotificationMessage(
+      'Gagal: ' + error.message
+    );
+    setNotificationType('error');
+    setShowNotification(true);
+
+    setTimeout(() => setShowNotification(false), 5000);
+  }
+};
 
   const handleDrop = (trash, endX, endY) => {
     const { anorganik, organik, b3 } = binPositions;
