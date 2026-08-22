@@ -90,7 +90,7 @@ const Home = () => {
 
     try {
       // Mengarah langsung ke domain publik backend Railway kamu kawan
-      const response = await fetch('https://eco-sorter-production.up.railway.app/get_leaderboard.php');
+      const response = await fetch('https://eco-sorter-production-bbd3.up.railway.app/get_leaderboard.php');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
